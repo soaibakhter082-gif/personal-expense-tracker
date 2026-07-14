@@ -1,12 +1,4 @@
-const categories = [
-  "Food",
-  "Travel",
-  "Shopping",
-  "Bills",
-  "Health",
-  "Education",
-  "Other",
-];
+import ExpenseForm from "@/components/ExpenseForm";
 
 const summaryCards = [
   {
@@ -62,100 +54,7 @@ export default function Home() {
         </section>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-          <section
-            aria-labelledby="expense-form-title"
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-          >
-            <div className="border-b border-slate-200 pb-4">
-              <h2
-                className="text-xl font-semibold text-slate-950"
-                id="expense-form-title"
-              >
-                Add Expense
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Enter the spending details you want to track.
-              </p>
-            </div>
-
-            <div className="mt-5 grid gap-4">
-              <div>
-                <label
-                  className="text-sm font-medium text-slate-700"
-                  htmlFor="amount"
-                >
-                  Amount
-                </label>
-                <input
-                  className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  id="amount"
-                  inputMode="decimal"
-                  min="0"
-                  name="amount"
-                  placeholder="₹0.00"
-                  type="number"
-                />
-              </div>
-
-              <div>
-                <label
-                  className="text-sm font-medium text-slate-700"
-                  htmlFor="category"
-                >
-                  Category
-                </label>
-                <select
-                  className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  id="category"
-                  name="category"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  className="text-sm font-medium text-slate-700"
-                  htmlFor="expense-date"
-                >
-                  Expense Date
-                </label>
-                <input
-                  className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  id="expense-date"
-                  name="expense_date"
-                  type="date"
-                />
-              </div>
-
-              <div>
-                <label
-                  className="text-sm font-medium text-slate-700"
-                  htmlFor="note"
-                >
-                  Note
-                </label>
-                <textarea
-                  className="mt-2 min-h-28 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  id="note"
-                  name="note"
-                  placeholder="Optional details about this expense"
-                />
-              </div>
-
-              <button
-                className="mt-2 inline-flex w-full items-center justify-center rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
-                type="button"
-              >
-                Add Expense
-              </button>
-            </div>
-          </section>
+          <ExpenseForm />
 
           <section
             aria-labelledby="expenses-title"
