@@ -19,6 +19,20 @@ function normalizeExpense(row: ExpenseRow): Expense {
   };
 }
 
+function sortExpenses(expenses: Expense[]) {
+  return [...expenses].sort((firstExpense, secondExpense) => {
+    const dateComparison = secondExpense.expense_date.localeCompare(
+      firstExpense.expense_date,
+    );
+
+    if (dateComparison !== 0) {
+      return dateComparison;
+    }
+
+    return secondExpense.created_at.localeCompare(firstExpense.created_at);
+  });
+}
+
 export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,6 +121,15 @@ export default function ExpenseTracker() {
     setEditingExpense(expense);
   }
 
+  function handleExpenseCreated(createdExpense: Expense) {
+    setExpenses((currentExpenses) =>
+      sortExpenses([
+        createdExpense,
+        ...currentExpenses.filter((expense) => expense.id !== createdExpense.id),
+      ]),
+    );
+  }
+
   function handleExpenseUpdated(updatedExpense: Expense) {
     setExpenses((currentExpenses) =>
       currentExpenses.map((expense) =>
@@ -125,6 +148,7 @@ export default function ExpenseTracker() {
       <ExpenseForm
         editingExpense={editingExpense}
         onCancelEdit={handleCancelEdit}
+        onExpenseCreated={handleExpenseCreated}
         onExpenseUpdated={handleExpenseUpdated}
       />
 

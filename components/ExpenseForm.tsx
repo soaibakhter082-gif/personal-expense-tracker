@@ -30,6 +30,7 @@ type ExpenseRow = Omit<Expense, "amount"> & {
 
 type ExpenseFormProps = {
   editingExpense: Expense | null;
+  onExpenseCreated: (expense: Expense) => void;
   onExpenseUpdated: (expense: Expense) => void;
   onCancelEdit: () => void;
 };
@@ -94,6 +95,7 @@ function normalizeExpense(row: ExpenseRow): Expense {
 
 export default function ExpenseForm({
   editingExpense,
+  onExpenseCreated,
   onExpenseUpdated,
   onCancelEdit,
 }: ExpenseFormProps) {
@@ -196,12 +198,16 @@ export default function ExpenseForm({
 
     setStatusMessage("Saving expense...");
 
-    const { error } = await supabase.from("expenses").insert(expenseInput);
+    const { data, error } = await supabase
+      .from("expenses")
+      .insert(expenseInput)
+      .select("id, amount, category, expense_date, note, created_at")
+      .single();
 
-    if (error) {
+    if (error || !data) {
       console.error("Unable to save expense.", {
-        code: error.code,
-        message: error.message,
+        code: error?.code,
+        message: error?.message ?? "No created row was returned.",
       });
       setDatabaseError("Unable to save the expense. Please try again.");
       setStatusMessage("");
@@ -209,6 +215,8 @@ export default function ExpenseForm({
       return;
     }
 
+    const createdExpense = normalizeExpense(data as ExpenseRow);
+    onExpenseCreated(createdExpense);
     setFormValues(savedFormValues);
     setErrors({});
     setDatabaseError("");
