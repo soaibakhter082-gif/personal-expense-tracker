@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ExpenseForm from "@/components/ExpenseForm";
 import ExpenseList from "@/components/ExpenseList";
+import ExpenseSummary from "@/components/ExpenseSummary";
 import { supabase } from "@/lib/supabaseClient";
 import type { Expense } from "@/types/expense";
 
@@ -144,82 +145,86 @@ export default function ExpenseTracker() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-      <ExpenseForm
-        editingExpense={editingExpense}
-        onCancelEdit={handleCancelEdit}
-        onExpenseCreated={handleExpenseCreated}
-        onExpenseUpdated={handleExpenseUpdated}
-      />
+    <div className="grid gap-6">
+      <ExpenseSummary expenses={expenses} />
 
-      <section
-        aria-labelledby="expenses-title"
-        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-      >
-        <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2
-              className="text-xl font-semibold text-slate-950"
-              id="expenses-title"
-            >
-              Expenses
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Recent expense records will be listed here.
-            </p>
-          </div>
-        </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
+        <ExpenseForm
+          editingExpense={editingExpense}
+          onCancelEdit={handleCancelEdit}
+          onExpenseCreated={handleExpenseCreated}
+          onExpenseUpdated={handleExpenseUpdated}
+        />
 
-        {isLoading ? (
-          <p
-            className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm font-medium text-slate-600"
-            role="status"
-          >
-            Loading expenses...
-          </p>
-        ) : null}
-
-        {!isLoading && errorMessage ? (
-          <p
-            className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-6 text-sm font-medium text-red-800"
-            role="alert"
-          >
-            {errorMessage}
-          </p>
-        ) : null}
-
-        {!isLoading && !errorMessage && expenses.length === 0 ? (
-          <div className="mt-6 flex min-h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center">
-            <p className="text-base font-semibold text-slate-800">
-              No expenses added yet.
-            </p>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-              Your saved expenses will appear here.
-            </p>
-          </div>
-        ) : null}
-
-        {!isLoading && !errorMessage && expenses.length > 0 ? (
-          <>
-            {deleteError ? (
-              <p
-                className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
-                role="alert"
+        <section
+          aria-labelledby="expenses-title"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+        >
+          <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2
+                className="text-xl font-semibold text-slate-950"
+                id="expenses-title"
               >
-                {deleteError}
+                Expenses
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Recent expense records will be listed here.
               </p>
-            ) : null}
+            </div>
+          </div>
 
-            <ExpenseList
-              deletingId={deletingId}
-              editingId={editingExpense?.id ?? null}
-              expenses={expenses}
-              onDelete={handleDeleteExpense}
-              onEdit={handleEditExpense}
-            />
-          </>
-        ) : null}
-      </section>
+          {isLoading ? (
+            <p
+              className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm font-medium text-slate-600"
+              role="status"
+            >
+              Loading expenses...
+            </p>
+          ) : null}
+
+          {!isLoading && errorMessage ? (
+            <p
+              className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-6 text-sm font-medium text-red-800"
+              role="alert"
+            >
+              {errorMessage}
+            </p>
+          ) : null}
+
+          {!isLoading && !errorMessage && expenses.length === 0 ? (
+            <div className="mt-6 flex min-h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center">
+              <p className="text-base font-semibold text-slate-800">
+                No expenses added yet.
+              </p>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                Your saved expenses will appear here.
+              </p>
+            </div>
+          ) : null}
+
+          {!isLoading && !errorMessage && expenses.length > 0 ? (
+            <>
+              {deleteError ? (
+                <p
+                  className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+                  role="alert"
+                >
+                  {deleteError}
+                </p>
+              ) : null}
+
+              <ExpenseList
+                deletingId={deletingId}
+                editingId={editingExpense?.id ?? null}
+                expenses={expenses}
+                onDelete={handleDeleteExpense}
+                onEdit={handleEditExpense}
+              />
+            </>
+          ) : null}
+        </section>
+      </div>
     </div>
   );
 }
