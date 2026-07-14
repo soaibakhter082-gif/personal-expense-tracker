@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import type { ExpenseInput } from "@/types/expense";
 
 const categories = [
@@ -26,6 +27,13 @@ type FieldErrors = Partial<Record<keyof FormValues, string>>;
 const initialFormValues: FormValues = {
   amount: "",
   category: "",
+  expense_date: "",
+  note: "",
+};
+
+const savedFormValues: FormValues = {
+  amount: "",
+  category: "Food",
   expense_date: "",
   note: "",
 };
@@ -68,7 +76,9 @@ function buildExpenseInput(values: FormValues): ExpenseInput {
 export default function ExpenseForm() {
   const [formValues, setFormValues] = useState<FormValues>(initialFormValues);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [message, setMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [databaseError, setDatabaseError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(
     event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
@@ -83,22 +93,49 @@ export default function ExpenseForm() {
       ...currentErrors,
       [name]: undefined,
     }));
-    setMessage("");
+    setStatusMessage("");
+    setDatabaseError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const validationErrors = validateForm(formValues);
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) {
-      setMessage("");
+    if (isSubmitting) {
       return;
     }
 
-    buildExpenseInput(formValues);
-    setMessage("Form is valid. Database saving will be added in the next step.");
+    const validationErrors = validateForm(formValues);
+    setErrors(validationErrors);
+    setDatabaseError("");
+    setStatusMessage("");
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
+    const expenseInput: ExpenseInput = buildExpenseInput(formValues);
+
+    setIsSubmitting(true);
+    setStatusMessage("Saving expense...");
+
+    const { error } = await supabase.from("expenses").insert(expenseInput);
+
+    if (error) {
+      console.error("Unable to save expense.", {
+        code: error.code,
+        message: error.message,
+      });
+      setDatabaseError("Unable to save the expense. Please try again.");
+      setStatusMessage("");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setFormValues(savedFormValues);
+    setErrors({});
+    setDatabaseError("");
+    setStatusMessage("Expense saved successfully.");
+    setIsSubmitting(false);
   }
 
   return (
@@ -225,20 +262,30 @@ export default function ExpenseForm() {
           />
         </div>
 
-        {message ? (
+        {statusMessage ? (
           <p
             className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800"
             role="status"
           >
-            {message}
+            {statusMessage}
+          </p>
+        ) : null}
+
+        {databaseError ? (
+          <p
+            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800"
+            role="alert"
+          >
+            {databaseError}
           </p>
         ) : null}
 
         <button
           className="mt-2 inline-flex w-full items-center justify-center rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
+          disabled={isSubmitting}
           type="submit"
         >
-          Add Expense
+          {isSubmitting ? "Saving..." : "Add Expense"}
         </button>
       </form>
     </section>
