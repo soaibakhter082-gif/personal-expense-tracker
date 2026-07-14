@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ExpenseForm from "@/components/ExpenseForm";
 import ExpenseList from "@/components/ExpenseList";
 import ExpenseSummary from "@/components/ExpenseSummary";
@@ -9,6 +9,11 @@ import type { Expense } from "@/types/expense";
 
 type ExpenseRow = Omit<Expense, "amount"> & {
   amount: number | string | null;
+};
+
+type FetchExpensesOptions = {
+  mode?: "initial" | "retry";
+  shouldUpdate?: () => boolean;
 };
 
 function normalizeExpense(row: ExpenseRow): Expense {
@@ -38,16 +43,21 @@ export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isRetrying, setIsRetrying] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  useEffect(() => {
-    let isActive = true;
+  const fetchExpenses = useCallback(
+    async ({ mode = "initial", shouldUpdate }: FetchExpensesOptions = {}) => {
+      const isRetry = mode === "retry";
 
-    async function loadExpenses() {
-      setIsLoading(true);
-      setErrorMessage("");
+      if (isRetry) {
+        setIsRetrying(true);
+      } else {
+        setIsLoading(true);
+        setErrorMessage("");
+      }
 
       const { data, error } = await supabase
         .from("expenses")
@@ -55,7 +65,7 @@ export default function ExpenseTracker() {
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
-      if (!isActive) {
+      if (shouldUpdate && !shouldUpdate()) {
         return;
       }
 
@@ -65,21 +75,35 @@ export default function ExpenseTracker() {
           message: error.message,
         });
         setExpenses([]);
-        setErrorMessage("Unable to load expenses. Please try again.");
+        setErrorMessage("Unable to load expenses.");
         setIsLoading(false);
+        setIsRetrying(false);
         return;
       }
 
       setExpenses(((data ?? []) as ExpenseRow[]).map(normalizeExpense));
+      setErrorMessage("");
       setIsLoading(false);
-    }
+      setIsRetrying(false);
+    },
+    [],
+  );
 
-    loadExpenses();
+  useEffect(() => {
+    let isActive = true;
+
+    const timeoutId = window.setTimeout(() => {
+      void fetchExpenses({
+        mode: "initial",
+        shouldUpdate: () => isActive,
+      });
+    }, 0);
 
     return () => {
       isActive = false;
+      window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [fetchExpenses]);
 
   async function handleDeleteExpense(id: number) {
     if (deletingId === id) {
@@ -144,6 +168,49 @@ export default function ExpenseTracker() {
     setEditingExpense(null);
   }
 
+  if (isLoading) {
+    return (
+      <section
+        aria-live="polite"
+        className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8"
+        role="status"
+      >
+        <div
+          aria-hidden="true"
+          className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-700"
+        />
+        <h2 className="mt-4 text-lg font-semibold text-slate-950">
+          Loading your expenses...
+        </h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Your saved expenses and summaries will appear shortly.
+        </p>
+      </section>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <section
+        className="rounded-lg border border-red-200 bg-white p-6 shadow-sm sm:p-8"
+        role="alert"
+      >
+        <h2 className="text-lg font-semibold text-red-800">{errorMessage}</h2>
+        <p className="mt-2 text-sm text-red-700">
+          Check your connection and try again.
+        </p>
+        <button
+          className="mt-5 inline-flex items-center justify-center rounded-md bg-red-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isRetrying}
+          onClick={() => void fetchExpenses({ mode: "retry" })}
+          type="button"
+        >
+          {isRetrying ? "Retrying..." : "Retry"}
+        </button>
+      </section>
+    );
+  }
+
   return (
     <div className="grid gap-6">
       <ExpenseSummary expenses={expenses} />
@@ -194,11 +261,14 @@ export default function ExpenseTracker() {
 
           {!isLoading && !errorMessage && expenses.length === 0 ? (
             <div className="mt-6 flex min-h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center">
-              <p className="text-base font-semibold text-slate-800">
-                No expenses added yet.
-              </p>
+              <h3 className="text-base font-semibold text-slate-800">
+                No expenses yet
+              </h3>
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                Your saved expenses will appear here.
+                Add your first expense using the form.
+              </p>
+              <p className="mt-1 max-w-sm text-sm leading-6 text-slate-500">
+                Saved expenses will appear here as soon as they are added.
               </p>
             </div>
           ) : null}

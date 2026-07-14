@@ -66,7 +66,7 @@ export default function ExpenseList({
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <button
                 aria-label={`Edit ${currencyFormatter.format(expense.amount)} ${expense.category} expense from ${formatExpenseDate(expense.expense_date)}`}
-                className="inline-flex w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="inline-flex w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 sm:w-auto"
                 disabled={editingId === expense.id}
                 onClick={() => onEdit(expense)}
                 type="button"
@@ -76,7 +76,7 @@ export default function ExpenseList({
 
               <button
                 aria-label={`Delete ${currencyFormatter.format(expense.amount)} ${expense.category} expense from ${formatExpenseDate(expense.expense_date)}`}
-                className="inline-flex w-full items-center justify-center rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="inline-flex w-full items-center justify-center rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-red-100 disabled:bg-red-50 disabled:text-red-300 sm:w-auto"
                 disabled={deletingId === expense.id}
                 onClick={() => onDelete(expense.id)}
                 type="button"
