@@ -25,6 +25,7 @@ export default function ExpenseTracker() {
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -102,9 +103,30 @@ export default function ExpenseTracker() {
     }
   }
 
+  function handleEditExpense(expense: Expense) {
+    setEditingExpense(expense);
+  }
+
+  function handleExpenseUpdated(updatedExpense: Expense) {
+    setExpenses((currentExpenses) =>
+      currentExpenses.map((expense) =>
+        expense.id === updatedExpense.id ? updatedExpense : expense,
+      ),
+    );
+    setEditingExpense(null);
+  }
+
+  function handleCancelEdit() {
+    setEditingExpense(null);
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-      <ExpenseForm />
+      <ExpenseForm
+        editingExpense={editingExpense}
+        onCancelEdit={handleCancelEdit}
+        onExpenseUpdated={handleExpenseUpdated}
+      />
 
       <section
         aria-labelledby="expenses-title"
@@ -166,8 +188,10 @@ export default function ExpenseTracker() {
 
             <ExpenseList
               deletingId={deletingId}
+              editingId={editingExpense?.id ?? null}
               expenses={expenses}
               onDelete={handleDeleteExpense}
+              onEdit={handleEditExpense}
             />
           </>
         ) : null}

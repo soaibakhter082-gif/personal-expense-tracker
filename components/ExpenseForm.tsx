@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import type { ExpenseInput } from "@/types/expense";
+import type { Expense, ExpenseInput } from "@/types/expense";
 
 const categories = [
   "Food",
@@ -23,6 +23,16 @@ type FormValues = {
 };
 
 type FieldErrors = Partial<Record<keyof FormValues, string>>;
+
+type ExpenseRow = Omit<Expense, "amount"> & {
+  amount: number | string | null;
+};
+
+type ExpenseFormProps = {
+  editingExpense: Expense | null;
+  onExpenseUpdated: (expense: Expense) => void;
+  onCancelEdit: () => void;
+};
 
 const initialFormValues: FormValues = {
   amount: "",
@@ -73,12 +83,48 @@ function buildExpenseInput(values: FormValues): ExpenseInput {
   };
 }
 
-export default function ExpenseForm() {
+function normalizeExpense(row: ExpenseRow): Expense {
+  const amount = Number(row.amount);
+
+  return {
+    ...row,
+    amount: Number.isFinite(amount) ? amount : 0,
+  };
+}
+
+export default function ExpenseForm({
+  editingExpense,
+  onExpenseUpdated,
+  onCancelEdit,
+}: ExpenseFormProps) {
   const [formValues, setFormValues] = useState<FormValues>(initialFormValues);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [statusMessage, setStatusMessage] = useState("");
   const [databaseError, setDatabaseError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditing = editingExpense !== null;
+
+  useEffect(() => {
+    if (!editingExpense) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFormValues({
+        amount: String(editingExpense.amount),
+        category: editingExpense.category,
+        expense_date: editingExpense.expense_date,
+        note: editingExpense.note ?? "",
+      });
+      setErrors({});
+      setStatusMessage("");
+      setDatabaseError("");
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [editingExpense]);
 
   function handleChange(
     event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
@@ -116,6 +162,38 @@ export default function ExpenseForm() {
     const expenseInput: ExpenseInput = buildExpenseInput(formValues);
 
     setIsSubmitting(true);
+
+    if (isEditing) {
+      setStatusMessage("Updating expense...");
+
+      const { data, error } = await supabase
+        .from("expenses")
+        .update(expenseInput)
+        .eq("id", editingExpense.id)
+        .select("id, amount, category, expense_date, note, created_at")
+        .single();
+
+      if (error) {
+        console.error("Unable to update expense.", {
+          code: error.code,
+          message: error.message,
+        });
+        setDatabaseError("Unable to update the expense. Please try again.");
+        setStatusMessage("");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const updatedExpense = normalizeExpense(data as ExpenseRow);
+      onExpenseUpdated(updatedExpense);
+      setFormValues(savedFormValues);
+      setErrors({});
+      setDatabaseError("");
+      setStatusMessage("Expense updated successfully.");
+      setIsSubmitting(false);
+      return;
+    }
+
     setStatusMessage("Saving expense...");
 
     const { error } = await supabase.from("expenses").insert(expenseInput);
@@ -138,6 +216,14 @@ export default function ExpenseForm() {
     setIsSubmitting(false);
   }
 
+  function handleCancelEdit() {
+    onCancelEdit();
+    setFormValues(initialFormValues);
+    setErrors({});
+    setStatusMessage("");
+    setDatabaseError("");
+  }
+
   return (
     <section
       aria-labelledby="expense-form-title"
@@ -148,10 +234,12 @@ export default function ExpenseForm() {
           className="text-xl font-semibold text-slate-950"
           id="expense-form-title"
         >
-          Add Expense
+          {isEditing ? "Edit Expense" : "Add Expense"}
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Enter the spending details you want to track.
+          {isEditing
+            ? "Update the selected expense details."
+            : "Enter the spending details you want to track."}
         </p>
       </div>
 
@@ -285,8 +373,24 @@ export default function ExpenseForm() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Saving..." : "Add Expense"}
+          {isSubmitting
+            ? isEditing
+              ? "Updating..."
+              : "Saving..."
+            : isEditing
+              ? "Update Expense"
+              : "Add Expense"}
         </button>
+
+        {isEditing ? (
+          <button
+            className="inline-flex w-full items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            onClick={handleCancelEdit}
+            type="button"
+          >
+            Cancel Edit
+          </button>
+        ) : null}
       </form>
     </section>
   );
