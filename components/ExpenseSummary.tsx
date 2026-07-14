@@ -87,7 +87,7 @@ export default function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
   ];
 
   return (
-    <section aria-labelledby="expense-summary-title" className="grid gap-4">
+    <section aria-labelledby="expense-summary-title" className="grid gap-4 sm:gap-5">
       <div>
         <h2
           className="text-xl font-semibold text-slate-950"
@@ -100,14 +100,14 @@ export default function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {summaryCards.map((card) => (
           <article
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+            className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
             key={card.label}
           >
-            <p className="text-sm font-medium text-slate-500">{card.label}</p>
-            <p className="mt-3 text-3xl font-semibold text-slate-950">
+            <p className="text-sm font-semibold text-slate-500">{card.label}</p>
+            <p className="mt-3 break-words text-2xl font-semibold leading-tight text-slate-950 sm:text-3xl">
               {card.value}
             </p>
           </article>
@@ -116,7 +116,7 @@ export default function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
 
       <section
         aria-labelledby="category-summary-title"
-        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+        className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
       >
         <div className="border-b border-slate-200 pb-4">
           <h3
@@ -131,16 +131,16 @@ export default function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
         </div>
 
         {categoryTotals.length > 0 ? (
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {categoryTotals.map((categoryTotal) => (
               <li
-                className="flex items-center justify-between gap-4 rounded-md bg-slate-50 px-4 py-3"
+                className="flex min-w-0 flex-col gap-1 rounded-lg bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                 key={categoryTotal.category}
               >
-                <span className="min-w-0 truncate text-sm font-medium text-slate-700">
+                <span className="min-w-0 break-words text-sm font-semibold text-slate-700 [overflow-wrap:anywhere]">
                   {categoryTotal.category}
                 </span>
-                <span className="shrink-0 text-sm font-semibold text-slate-950">
+                <span className="shrink-0 break-words text-sm font-semibold text-slate-950">
                   {currencyFormatter.format(categoryTotal.total)}
                 </span>
               </li>

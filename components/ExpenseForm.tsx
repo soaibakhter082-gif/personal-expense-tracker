@@ -235,7 +235,7 @@ export default function ExpenseForm({
   return (
     <section
       aria-labelledby="expense-form-title"
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
     >
       <div className="border-b border-slate-200 pb-4">
         <h2
@@ -251,15 +251,18 @@ export default function ExpenseForm({
         </p>
       </div>
 
-      <form className="mt-5 grid gap-4" noValidate onSubmit={handleSubmit}>
+      <form className="mt-5 grid gap-4 sm:gap-5" noValidate onSubmit={handleSubmit}>
         <div>
-          <label className="text-sm font-medium text-slate-700" htmlFor="amount">
+          <label
+            className="block text-sm font-semibold text-slate-700"
+            htmlFor="amount"
+          >
             Amount
           </label>
           <input
             aria-describedby={errors.amount ? "amount-error" : undefined}
             aria-invalid={Boolean(errors.amount)}
-            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
             id="amount"
             inputMode="decimal"
             min="0"
@@ -282,7 +285,7 @@ export default function ExpenseForm({
 
         <div>
           <label
-            className="text-sm font-medium text-slate-700"
+            className="block text-sm font-semibold text-slate-700"
             htmlFor="category"
           >
             Category
@@ -290,7 +293,7 @@ export default function ExpenseForm({
           <select
             aria-describedby={errors.category ? "category-error" : undefined}
             aria-invalid={Boolean(errors.category)}
-            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
             id="category"
             name="category"
             onChange={handleChange}
@@ -316,7 +319,7 @@ export default function ExpenseForm({
 
         <div>
           <label
-            className="text-sm font-medium text-slate-700"
+            className="block text-sm font-semibold text-slate-700"
             htmlFor="expense-date"
           >
             Expense Date
@@ -326,7 +329,7 @@ export default function ExpenseForm({
               errors.expense_date ? "expense-date-error" : undefined
             }
             aria-invalid={Boolean(errors.expense_date)}
-            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
             id="expense-date"
             name="expense_date"
             onChange={handleChange}
@@ -345,11 +348,14 @@ export default function ExpenseForm({
         </div>
 
         <div>
-          <label className="text-sm font-medium text-slate-700" htmlFor="note">
+          <label
+            className="block text-sm font-semibold text-slate-700"
+            htmlFor="note"
+          >
             Note
           </label>
           <textarea
-            className="mt-2 min-h-28 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className="mt-2 min-h-28 w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
             id="note"
             name="note"
             onChange={handleChange}
@@ -360,7 +366,7 @@ export default function ExpenseForm({
 
         {statusMessage ? (
           <p
-            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800"
+            className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium leading-6 text-emerald-800"
             role="status"
           >
             {statusMessage}
@@ -369,7 +375,7 @@ export default function ExpenseForm({
 
         {databaseError ? (
           <p
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800"
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium leading-6 text-red-800"
             role="alert"
           >
             {databaseError}
@@ -377,7 +383,7 @@ export default function ExpenseForm({
         ) : null}
 
         <button
-          className="mt-2 inline-flex w-full items-center justify-center rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
+          className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-emerald-300 disabled:text-white"
           disabled={isSubmitting}
           type="submit"
         >
@@ -392,7 +398,7 @@ export default function ExpenseForm({
 
         {isEditing ? (
           <button
-            className="inline-flex w-full items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
             onClick={handleCancelEdit}
             type="button"
           >

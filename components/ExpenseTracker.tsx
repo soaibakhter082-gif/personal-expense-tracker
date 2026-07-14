@@ -172,7 +172,7 @@ export default function ExpenseTracker() {
     return (
       <section
         aria-live="polite"
-        className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8"
+        className="flex min-h-72 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8"
         role="status"
       >
         <div
@@ -192,7 +192,7 @@ export default function ExpenseTracker() {
   if (errorMessage) {
     return (
       <section
-        className="rounded-lg border border-red-200 bg-white p-6 shadow-sm sm:p-8"
+        className="rounded-xl border border-red-200 bg-white p-5 shadow-sm sm:p-8"
         role="alert"
       >
         <h2 className="text-lg font-semibold text-red-800">{errorMessage}</h2>
@@ -200,7 +200,7 @@ export default function ExpenseTracker() {
           Check your connection and try again.
         </p>
         <button
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-red-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-red-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isRetrying}
           onClick={() => void fetchExpenses({ mode: "retry" })}
           type="button"
@@ -212,10 +212,10 @@ export default function ExpenseTracker() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-5 sm:gap-6">
       <ExpenseSummary expenses={expenses} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
+      <div className="grid items-start gap-5 sm:gap-6 xl:grid-cols-[minmax(22rem,0.9fr)_minmax(0,1.35fr)]">
         <ExpenseForm
           editingExpense={editingExpense}
           onCancelEdit={handleCancelEdit}
@@ -225,7 +225,7 @@ export default function ExpenseTracker() {
 
         <section
           aria-labelledby="expenses-title"
-          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+          className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
         >
           <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -260,7 +260,7 @@ export default function ExpenseTracker() {
           ) : null}
 
           {!isLoading && !errorMessage && expenses.length === 0 ? (
-            <div className="mt-6 flex min-h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center">
+            <div className="mt-6 flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center">
               <h3 className="text-base font-semibold text-slate-800">
                 No expenses yet
               </h3>
@@ -277,7 +277,7 @@ export default function ExpenseTracker() {
             <>
               {deleteError ? (
                 <p
-                  className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+                  className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium leading-6 text-red-800"
                   role="alert"
                 >
                   {deleteError}
