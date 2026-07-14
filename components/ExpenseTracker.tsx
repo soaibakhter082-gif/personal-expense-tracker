@@ -23,6 +23,8 @@ export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -62,6 +64,43 @@ export default function ExpenseTracker() {
       isActive = false;
     };
   }, []);
+
+  async function handleDeleteExpense(id: number) {
+    if (deletingId === id) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this expense?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+    setDeleteError(null);
+
+    try {
+      const { error } = await supabase.from("expenses").delete().eq("id", id);
+
+      if (error) {
+        console.error("Unable to delete expense.", {
+          code: error.code,
+          message: error.message,
+        });
+        setDeleteError("Unable to delete the expense. Please try again.");
+        return;
+      }
+
+      setExpenses((currentExpenses) =>
+        currentExpenses.filter((expense) => expense.id !== id),
+      );
+      setDeleteError(null);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
@@ -115,7 +154,22 @@ export default function ExpenseTracker() {
         ) : null}
 
         {!isLoading && !errorMessage && expenses.length > 0 ? (
-          <ExpenseList expenses={expenses} />
+          <>
+            {deleteError ? (
+              <p
+                className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+                role="alert"
+              >
+                {deleteError}
+              </p>
+            ) : null}
+
+            <ExpenseList
+              deletingId={deletingId}
+              expenses={expenses}
+              onDelete={handleDeleteExpense}
+            />
+          </>
         ) : null}
       </section>
     </div>

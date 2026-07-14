@@ -2,6 +2,8 @@ import type { Expense } from "@/types/expense";
 
 type ExpenseListProps = {
   expenses: Expense[];
+  onDelete: (id: number) => void;
+  deletingId: number | null;
 };
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
@@ -25,7 +27,11 @@ function formatExpenseDate(expenseDate: string) {
   return dateFormatter.format(date);
 }
 
-export default function ExpenseList({ expenses }: ExpenseListProps) {
+export default function ExpenseList({
+  expenses,
+  onDelete,
+  deletingId,
+}: ExpenseListProps) {
   return (
     <ul className="mt-6 grid gap-3">
       {expenses.map((expense) => (
@@ -52,6 +58,16 @@ export default function ExpenseList({ expenses }: ExpenseListProps) {
                 </p>
               ) : null}
             </div>
+
+            <button
+              aria-label={`Delete ${currencyFormatter.format(expense.amount)} ${expense.category} expense from ${formatExpenseDate(expense.expense_date)}`}
+              className="inline-flex w-full items-center justify-center rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              disabled={deletingId === expense.id}
+              onClick={() => onDelete(expense.id)}
+              type="button"
+            >
+              {deletingId === expense.id ? "Deleting..." : "Delete"}
+            </button>
           </div>
         </li>
       ))}
