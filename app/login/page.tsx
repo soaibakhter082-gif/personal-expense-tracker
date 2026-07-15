@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import SignupForm from "@/components/SignupForm";
+import LoginForm from "@/components/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Create your account | Personal Expense Tracker",
-  description: "Create an account for the Personal Expense Tracker.",
+  title: "Log in | Personal Expense Tracker",
+  description: "Log in to the Personal Expense Tracker.",
 };
 
-export default function SignupPage() {
+export default function LoginPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-4 text-slate-950 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 sm:gap-6">
@@ -17,26 +16,15 @@ export default function SignupPage() {
           </p>
           <div className="mt-3 max-w-2xl">
             <h1 className="text-2xl font-semibold leading-tight text-slate-950 sm:text-4xl">
-              Create your account
+              Welcome back
             </h1>
             <p className="mt-3 text-base leading-7 text-slate-600 sm:text-lg">
-              You need an account so your expenses remain private and separate
-              from every other user&apos;s records.
+              Log in to view and manage your private expenses.
             </p>
           </div>
         </header>
 
-        <SignupForm />
-
-        <p className="text-center text-sm text-slate-600">
-          Already have an account?{" "}
-          <Link
-            className="font-semibold text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
-            href="/login"
-          >
-            Log in.
-          </Link>
-        </p>
+        <LoginForm />
       </div>
     </main>
   );

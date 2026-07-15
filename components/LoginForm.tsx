@@ -1,62 +1,50 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { signup, type SignupState } from "@/app/signup/actions";
+import Link from "next/link";
+import { useActionState } from "react";
+import { login, type LoginState } from "@/app/login/actions";
 
-const initialSignupState: SignupState = {
+const initialLoginState: LoginState = {
   status: "idle",
   message: "",
 };
 
-function getFieldErrorId(fieldName: string, state: SignupState) {
-  return state.fieldErrors?.[fieldName as keyof NonNullable<SignupState["fieldErrors"]>]
+function getFieldErrorId(fieldName: string, state: LoginState) {
+  return state.fieldErrors?.[fieldName as keyof NonNullable<LoginState["fieldErrors"]>]
     ? `${fieldName}-error`
     : undefined;
 }
 
-export default function SignupForm() {
-  const formRef = useRef<HTMLFormElement>(null);
+export default function LoginForm() {
   const [state, formAction, isPending] = useActionState(
-    signup,
-    initialSignupState,
+    login,
+    initialLoginState,
   );
   const emailErrorId = getFieldErrorId("email", state);
   const passwordErrorId = getFieldErrorId("password", state);
-  const confirmPasswordErrorId = getFieldErrorId("confirmPassword", state);
-
-  useEffect(() => {
-    if (state.status === "success") {
-      formRef.current?.reset();
-    }
-  }, [state.status]);
 
   return (
     <section
-      aria-labelledby="signup-form-title"
+      aria-labelledby="login-form-title"
       className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
     >
       <div className="border-b border-slate-200 pb-4">
         <h2
           className="text-xl font-semibold text-slate-950"
-          id="signup-form-title"
+          id="login-form-title"
         >
-          Sign up with email
+          Log in with email
         </h2>
         <p className="mt-1 text-sm leading-6 text-slate-500">
-          Use an email address you can access so you can confirm your account.
+          Enter the email and password you used when creating your account.
         </p>
       </div>
 
-      <form
-        action={formAction}
-        className="mt-5 grid gap-4 sm:gap-5"
-        noValidate
-        ref={formRef}
-      >
+      <form action={formAction} className="mt-5 grid gap-4 sm:gap-5" noValidate>
         <div>
           <label
             className="block text-sm font-semibold text-slate-700"
-            htmlFor="signup-email"
+            htmlFor="login-email"
           >
             Email
           </label>
@@ -65,8 +53,9 @@ export default function SignupForm() {
             aria-invalid={Boolean(state.fieldErrors?.email)}
             autoComplete="email"
             className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
-            defaultValue={state.status === "error" ? state.email : ""}
-            id="signup-email"
+            defaultValue={state.email ?? ""}
+            id="login-email"
+            key={state.email ?? "login-email"}
             name="email"
             placeholder="you@example.com"
             type="email"
@@ -85,16 +74,16 @@ export default function SignupForm() {
         <div>
           <label
             className="block text-sm font-semibold text-slate-700"
-            htmlFor="signup-password"
+            htmlFor="login-password"
           >
             Password
           </label>
           <input
             aria-describedby={passwordErrorId}
             aria-invalid={Boolean(state.fieldErrors?.password)}
-            autoComplete="new-password"
+            autoComplete="current-password"
             className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
-            id="signup-password"
+            id="login-password"
             name="password"
             type="password"
           />
@@ -109,47 +98,10 @@ export default function SignupForm() {
           ) : null}
         </div>
 
-        <div>
-          <label
-            className="block text-sm font-semibold text-slate-700"
-            htmlFor="signup-confirm-password"
-          >
-            Confirm Password
-          </label>
-          <input
-            aria-describedby={confirmPasswordErrorId}
-            aria-invalid={Boolean(state.fieldErrors?.confirmPassword)}
-            autoComplete="new-password"
-            className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
-            id="signup-confirm-password"
-            name="confirmPassword"
-            type="password"
-          />
-          {state.fieldErrors?.confirmPassword ? (
-            <p
-              className="mt-2 text-sm font-medium text-red-700"
-              id="confirmPassword-error"
-              role="alert"
-            >
-              {state.fieldErrors.confirmPassword}
-            </p>
-          ) : null}
-        </div>
-
         {state.status === "error" && state.message ? (
           <p
             className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium leading-6 text-red-800"
             role="alert"
-          >
-            {state.message}
-          </p>
-        ) : null}
-
-        {state.status === "success" && state.message ? (
-          <p
-            aria-live="polite"
-            className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium leading-6 text-emerald-800"
-            role="status"
           >
             {state.message}
           </p>
@@ -160,9 +112,19 @@ export default function SignupForm() {
           disabled={isPending}
           type="submit"
         >
-          {isPending ? "Creating account..." : "Create Account"}
+          {isPending ? "Logging in..." : "Log In"}
         </button>
       </form>
+
+      <p className="mt-5 text-center text-sm text-slate-600">
+        Don&apos;t have an account?{" "}
+        <Link
+          className="font-semibold text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
+          href="/signup"
+        >
+          Create one.
+        </Link>
+      </p>
     </section>
   );
 }

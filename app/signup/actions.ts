@@ -16,11 +16,6 @@ export type SignupState = {
   email?: string;
 };
 
-export const initialSignupState: SignupState = {
-  status: "idle",
-  message: "",
-};
-
 const signupSuccessMessage =
   "Account created. Check your email and confirm your account before logging in.";
 
