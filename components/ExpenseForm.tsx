@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 import type { Expense, ExpenseInput } from "@/types/expense";
 
 const categories = [
@@ -99,6 +99,7 @@ export default function ExpenseForm({
   onExpenseUpdated,
   onCancelEdit,
 }: ExpenseFormProps) {
+  const [supabase] = useState(() => createClient());
   const [formValues, setFormValues] = useState<FormValues>(initialFormValues);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [statusMessage, setStatusMessage] = useState("");

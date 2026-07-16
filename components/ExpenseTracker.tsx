@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import ExpenseForm from "@/components/ExpenseForm";
 import ExpenseList from "@/components/ExpenseList";
 import ExpenseSummary from "@/components/ExpenseSummary";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 import type { Expense } from "@/types/expense";
 
 type ExpenseRow = Omit<Expense, "amount"> & {
@@ -40,6 +40,7 @@ function sortExpenses(expenses: Expense[]) {
 }
 
 export default function ExpenseTracker() {
+  const [supabase] = useState(() => createClient());
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -86,7 +87,7 @@ export default function ExpenseTracker() {
       setIsLoading(false);
       setIsRetrying(false);
     },
-    [],
+    [supabase],
   );
 
   useEffect(() => {
