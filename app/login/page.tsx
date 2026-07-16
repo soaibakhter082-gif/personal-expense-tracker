@@ -47,6 +47,13 @@ function getLoginNotice(params: Awaited<SearchParams>): LoginNotice {
     };
   }
 
+  if (message === "email-confirmed") {
+    return {
+      variant: "success",
+      message: "Your email has been confirmed. You can now log in.",
+    };
+  }
+
   return {
     variant: "info",
     message: "",

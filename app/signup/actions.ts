@@ -2,6 +2,10 @@
 
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import {
+  buildConfirmationRedirectUrl,
+  getCanonicalSiteOrigin,
+} from "@/lib/siteUrl";
 
 export type SignupFieldErrors = {
   email?: string;
@@ -74,52 +78,6 @@ function validateSignupForm(formData: FormData) {
     password,
     fieldErrors,
   };
-}
-
-function getFirstHeaderValue(value: string | null) {
-  return value?.split(",")[0]?.trim() ?? "";
-}
-
-function getSafeHost(value: string | null) {
-  const host = getFirstHeaderValue(value);
-
-  if (
-    !host ||
-    host.includes("/") ||
-    host.includes("\\") ||
-    !/^(?:[a-z0-9-]+\.)*[a-z0-9-]+(?::\d{1,5})?$/i.test(host)
-  ) {
-    return "";
-  }
-
-  return host;
-}
-
-function getProtocol(host: string, forwardedProto: string) {
-  if (forwardedProto === "http" || forwardedProto === "https") {
-    return forwardedProto;
-  }
-
-  return /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/i.test(host)
-    ? "http"
-    : "https";
-}
-
-function getCurrentOrigin(requestHeaders: Headers) {
-  const host =
-    getSafeHost(requestHeaders.get("x-forwarded-host")) ||
-    getSafeHost(requestHeaders.get("host"));
-
-  if (!host) {
-    throw new Error("Unable to determine application origin.");
-  }
-
-  const protocol = getProtocol(
-    host,
-    getFirstHeaderValue(requestHeaders.get("x-forwarded-proto")),
-  );
-
-  return `${protocol}://${host}`;
 }
 
 function isAuthEmailServiceFailure(
@@ -225,6 +183,15 @@ function logEmptyIdentitiesReturned() {
   }
 }
 
+function logConfirmationRedirectOrigin(stage: SignupStage, origin: string) {
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[signup] Confirmation redirect origin resolved", {
+      stage,
+      origin,
+    });
+  }
+}
+
 function getExceptionDetails(error: unknown): {
   name?: string;
   message?: string;
@@ -262,12 +229,9 @@ export async function signup(
     stage = "read-request-headers";
     const requestHeaders = await headers();
     stage = "build-redirect-url";
-    const currentOrigin = getCurrentOrigin(requestHeaders);
-    const confirmationDestination = new URL(
-      "/auth/confirm?next=/dashboard",
-      currentOrigin,
-    );
-    const emailRedirectTo = confirmationDestination.toString();
+    const currentOrigin = getCanonicalSiteOrigin(requestHeaders);
+    const emailRedirectTo = buildConfirmationRedirectUrl(currentOrigin);
+    logConfirmationRedirectOrigin(stage, currentOrigin);
 
     stage = "call-sign-up";
     const { data, error } = await supabase.auth.signUp({
