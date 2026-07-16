@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const defaultNextPath = "/dashboard";
 const confirmationFailedPath = "/signup?error=confirmation-failed";
+const allowedConfirmationTypes = new Set<EmailOtpType>(["email", "signup"]);
 
 function sanitizeNextPath(nextPath: string | null) {
   if (!nextPath) {
@@ -34,19 +35,23 @@ function createRedirectUrl(request: NextRequest, path: string) {
   return redirectUrl;
 }
 
+function isAllowedConfirmationType(type: string | null): type is EmailOtpType {
+  return type !== null && allowedConfirmationTypes.has(type as EmailOtpType);
+}
+
 export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const type = request.nextUrl.searchParams.get("type");
   const nextPath = sanitizeNextPath(request.nextUrl.searchParams.get("next"));
   const failureRedirectUrl = createRedirectUrl(request, confirmationFailedPath);
 
-  if (!tokenHash || !type) {
+  if (!tokenHash || !isAllowedConfirmationType(type)) {
     return NextResponse.redirect(failureRedirectUrl);
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({
-    type: type as EmailOtpType,
+    type,
     token_hash: tokenHash,
   });
 
