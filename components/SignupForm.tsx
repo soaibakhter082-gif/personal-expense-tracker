@@ -15,7 +15,10 @@ function getFieldErrorId(fieldName: string, state: SignupState) {
 }
 
 export default function SignupForm() {
+  const emailRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const [state, formAction, isPending] = useActionState(
     signup,
     initialSignupState,
@@ -25,10 +28,20 @@ export default function SignupForm() {
   const confirmPasswordErrorId = getFieldErrorId("confirmPassword", state);
 
   useEffect(() => {
-    if (state.status === "success") {
-      formRef.current?.reset();
+    if (state.status !== "idle") {
+      if (emailRef.current) {
+        emailRef.current.value = state.email ?? "";
+      }
+
+      if (passwordRef.current) {
+        passwordRef.current.value = "";
+      }
+
+      if (confirmPasswordRef.current) {
+        confirmPasswordRef.current.value = "";
+      }
     }
-  }, [state.status]);
+  }, [state.email, state.status]);
 
   return (
     <section
@@ -51,6 +64,11 @@ export default function SignupForm() {
         action={formAction}
         className="mt-5 grid gap-4 sm:gap-5"
         noValidate
+        onSubmit={(event) => {
+          if (isPending) {
+            event.preventDefault();
+          }
+        }}
         ref={formRef}
       >
         <div>
@@ -65,10 +83,11 @@ export default function SignupForm() {
             aria-invalid={Boolean(state.fieldErrors?.email)}
             autoComplete="email"
             className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
-            defaultValue={state.status === "error" ? state.email : ""}
+            defaultValue={state.email ?? ""}
             id="signup-email"
             name="email"
             placeholder="you@example.com"
+            ref={emailRef}
             type="email"
           />
           {state.fieldErrors?.email ? (
@@ -96,6 +115,7 @@ export default function SignupForm() {
             className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
             id="signup-password"
             name="password"
+            ref={passwordRef}
             type="password"
           />
           {state.fieldErrors?.password ? (
@@ -123,6 +143,7 @@ export default function SignupForm() {
             className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:text-sm"
             id="signup-confirm-password"
             name="confirmPassword"
+            ref={confirmPasswordRef}
             type="password"
           />
           {state.fieldErrors?.confirmPassword ? (
