@@ -1,13 +1,63 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import AuthNotice from "@/components/AuthNotice";
 import SignupForm from "@/components/SignupForm";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Create your account | Personal Expense Tracker",
   description: "Create an account for the Personal Expense Tracker.",
 };
 
-export default function SignupPage() {
+type SearchParams = Promise<{
+  [key: string]: string | string[] | undefined;
+}>;
+
+function getSingleParamValue(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : undefined;
+}
+
+function getSignupErrorMessage(params: Awaited<SearchParams>) {
+  const error = getSingleParamValue(params.error);
+
+  if (error === "confirmation-failed") {
+    return "The confirmation link is invalid or expired. Try signing up again, or log in if your email is already confirmed.";
+  }
+
+  return "";
+}
+
+function hasValidSubject(claims: unknown) {
+  if (!claims || typeof claims !== "object" || !("sub" in claims)) {
+    return false;
+  }
+
+  return typeof claims.sub === "string" && claims.sub.trim().length > 0;
+}
+
+async function isAuthenticated() {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getClaims();
+
+    return !error && hasValidSubject(data?.claims);
+  } catch {
+    return false;
+  }
+}
+
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  if (await isAuthenticated()) {
+    redirect("/dashboard");
+  }
+
+  const errorMessage = getSignupErrorMessage(await searchParams);
+
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-4 text-slate-950 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 sm:gap-6">
@@ -25,6 +75,8 @@ export default function SignupPage() {
             </p>
           </div>
         </header>
+
+        <AuthNotice message={errorMessage} variant="error" />
 
         <SignupForm />
 

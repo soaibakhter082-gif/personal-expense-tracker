@@ -1,12 +1,88 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import AuthNotice from "@/components/AuthNotice";
 import LoginForm from "@/components/LoginForm";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Log in | Personal Expense Tracker",
   description: "Log in to the Personal Expense Tracker.",
 };
 
-export default function LoginPage() {
+type SearchParams = Promise<{
+  [key: string]: string | string[] | undefined;
+}>;
+
+type LoginNotice = {
+  variant: "success" | "error" | "info";
+  message: string;
+};
+
+function getSingleParamValue(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : undefined;
+}
+
+function getLoginNotice(params: Awaited<SearchParams>): LoginNotice {
+  const error = getSingleParamValue(params.error);
+  const message = getSingleParamValue(params.message);
+
+  if (error === "session-required") {
+    return {
+      variant: "info",
+      message: "Please log in to continue.",
+    };
+  }
+
+  if (error === "session-expired") {
+    return {
+      variant: "error",
+      message: "Your session expired. Log in again to continue.",
+    };
+  }
+
+  if (message === "signed-out") {
+    return {
+      variant: "success",
+      message: "You have been logged out successfully.",
+    };
+  }
+
+  return {
+    variant: "info",
+    message: "",
+  };
+}
+
+function hasValidSubject(claims: unknown) {
+  if (!claims || typeof claims !== "object" || !("sub" in claims)) {
+    return false;
+  }
+
+  return typeof claims.sub === "string" && claims.sub.trim().length > 0;
+}
+
+async function isAuthenticated() {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getClaims();
+
+    return !error && hasValidSubject(data?.claims);
+  } catch {
+    return false;
+  }
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  if (await isAuthenticated()) {
+    redirect("/dashboard");
+  }
+
+  const notice = getLoginNotice(await searchParams);
+
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-4 text-slate-950 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 sm:gap-6">
@@ -23,6 +99,8 @@ export default function LoginPage() {
             </p>
           </div>
         </header>
+
+        <AuthNotice message={notice.message} variant={notice.variant} />
 
         <LoginForm />
       </div>
