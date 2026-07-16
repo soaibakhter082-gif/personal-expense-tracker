@@ -9,19 +9,22 @@ export const metadata: Metadata = {
   description: "Manage your private expenses and spending summaries",
 };
 
-function hasValidSubject(claims: unknown) {
+function getVerifiedUserId(claims: unknown) {
   if (!claims || typeof claims !== "object" || !("sub" in claims)) {
-    return false;
+    return null;
   }
 
-  return typeof claims.sub === "string" && claims.sub.trim().length > 0;
+  return typeof claims.sub === "string" && claims.sub.trim().length > 0
+    ? claims.sub
+    : null;
 }
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
+  const userId = getVerifiedUserId(data?.claims);
 
-  if (error || !hasValidSubject(data?.claims)) {
+  if (error || !userId) {
     redirect("/login?error=session-required");
   }
 
@@ -50,7 +53,7 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        <ExpenseTracker />
+        <ExpenseTracker userId={userId} />
       </div>
     </main>
   );

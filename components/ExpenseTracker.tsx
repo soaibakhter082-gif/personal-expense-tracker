@@ -7,13 +7,18 @@ import ExpenseSummary from "@/components/ExpenseSummary";
 import { createClient } from "@/lib/supabase/client";
 import type { Expense } from "@/types/expense";
 
-type ExpenseRow = Omit<Expense, "amount"> & {
+type ExpenseRow = Omit<Expense, "amount" | "user_id"> & {
   amount: number | string | null;
+  user_id: string | null;
 };
 
 type FetchExpensesOptions = {
   mode?: "initial" | "retry";
   shouldUpdate?: () => boolean;
+};
+
+type ExpenseTrackerProps = {
+  userId: string;
 };
 
 function normalizeExpense(row: ExpenseRow): Expense {
@@ -22,6 +27,7 @@ function normalizeExpense(row: ExpenseRow): Expense {
   return {
     ...row,
     amount: Number.isFinite(amount) ? amount : 0,
+    user_id: typeof row.user_id === "string" ? row.user_id : "",
   };
 }
 
@@ -39,7 +45,7 @@ function sortExpenses(expenses: Expense[]) {
   });
 }
 
-export default function ExpenseTracker() {
+export default function ExpenseTracker({ userId }: ExpenseTrackerProps) {
   const [supabase] = useState(() => createClient());
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,7 +68,8 @@ export default function ExpenseTracker() {
 
       const { data, error } = await supabase
         .from("expenses")
-        .select("id, amount, category, expense_date, note, created_at")
+        .select("id, user_id, amount, category, expense_date, note, created_at")
+        .eq("user_id", userId)
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -87,7 +94,7 @@ export default function ExpenseTracker() {
       setIsLoading(false);
       setIsRetrying(false);
     },
-    [supabase],
+    [supabase, userId],
   );
 
   useEffect(() => {
@@ -123,7 +130,11 @@ export default function ExpenseTracker() {
     setDeleteError(null);
 
     try {
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
+      const { error } = await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", userId);
 
       if (error) {
         console.error("Unable to delete expense.", {
@@ -222,6 +233,7 @@ export default function ExpenseTracker() {
           onCancelEdit={handleCancelEdit}
           onExpenseCreated={handleExpenseCreated}
           onExpenseUpdated={handleExpenseUpdated}
+          userId={userId}
         />
 
         <section

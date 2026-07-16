@@ -24,8 +24,9 @@ type FormValues = {
 
 type FieldErrors = Partial<Record<keyof FormValues, string>>;
 
-type ExpenseRow = Omit<Expense, "amount"> & {
+type ExpenseRow = Omit<Expense, "amount" | "user_id"> & {
   amount: number | string | null;
+  user_id: string | null;
 };
 
 type ExpenseFormProps = {
@@ -33,6 +34,7 @@ type ExpenseFormProps = {
   onExpenseCreated: (expense: Expense) => void;
   onExpenseUpdated: (expense: Expense) => void;
   onCancelEdit: () => void;
+  userId: string;
 };
 
 const initialFormValues: FormValues = {
@@ -90,6 +92,7 @@ function normalizeExpense(row: ExpenseRow): Expense {
   return {
     ...row,
     amount: Number.isFinite(amount) ? amount : 0,
+    user_id: typeof row.user_id === "string" ? row.user_id : "",
   };
 }
 
@@ -98,6 +101,7 @@ export default function ExpenseForm({
   onExpenseCreated,
   onExpenseUpdated,
   onCancelEdit,
+  userId,
 }: ExpenseFormProps) {
   const [supabase] = useState(() => createClient());
   const [formValues, setFormValues] = useState<FormValues>(initialFormValues);
@@ -173,7 +177,8 @@ export default function ExpenseForm({
         .from("expenses")
         .update(expenseInput)
         .eq("id", editingExpense.id)
-        .select("id, amount, category, expense_date, note, created_at")
+        .eq("user_id", userId)
+        .select("id, user_id, amount, category, expense_date, note, created_at")
         .single();
 
       if (error) {
@@ -202,7 +207,7 @@ export default function ExpenseForm({
     const { data, error } = await supabase
       .from("expenses")
       .insert(expenseInput)
-      .select("id, amount, category, expense_date, note, created_at")
+      .select("id, user_id, amount, category, expense_date, note, created_at")
       .single();
 
     if (error || !data) {
@@ -217,6 +222,18 @@ export default function ExpenseForm({
     }
 
     const createdExpense = normalizeExpense(data as ExpenseRow);
+
+    if (createdExpense.user_id !== userId) {
+      console.error("Unable to save expense.", {
+        code: "owner_mismatch",
+        message: "Created expense owner did not match the verified user.",
+      });
+      setDatabaseError("Unable to save the expense. Please try again.");
+      setStatusMessage("");
+      setIsSubmitting(false);
+      return;
+    }
+
     onExpenseCreated(createdExpense);
     setFormValues(savedFormValues);
     setErrors({});
