@@ -81,13 +81,13 @@ export async function login(
   if (error) {
     console.error("Login failed.", {
       code: error.code,
-      message: error.message,
+      status: error.status,
     });
 
     return {
       status: "error",
       message: isUnconfirmedEmailError(error)
-        ? "Confirm your email address before logging in."
+        ? "This account cannot sign in yet. Please create a fresh account or contact support."
         : "Email or password is incorrect.",
       email,
     };

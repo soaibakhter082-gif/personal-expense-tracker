@@ -56,7 +56,7 @@ export default function SignupForm() {
           Sign up with email
         </h2>
         <p className="mt-1 text-sm leading-6 text-slate-500">
-          Use an email address you can access so you can confirm your account.
+          Create an account to keep your expenses private.
         </p>
       </div>
 
@@ -161,16 +161,6 @@ export default function SignupForm() {
           <p
             className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium leading-6 text-red-800"
             role="alert"
-          >
-            {state.message}
-          </p>
-        ) : null}
-
-        {state.status === "success" && state.message ? (
-          <p
-            aria-live="polite"
-            className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium leading-6 text-emerald-800"
-            role="status"
           >
             {state.message}
           </p>

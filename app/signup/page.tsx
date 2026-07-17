@@ -22,7 +22,7 @@ function getSignupErrorMessage(params: Awaited<SearchParams>) {
   const error = getSingleParamValue(params.error);
 
   if (error === "confirmation-failed") {
-    return "The confirmation link is invalid or expired. Try signing up again, or log in if your email is already confirmed.";
+    return "The account link is invalid or expired. Try signing up again, or log in if your account already exists.";
   }
 
   return "";
@@ -70,8 +70,7 @@ export default async function SignupPage({
               Create your account
             </h1>
             <p className="mt-3 text-base leading-7 text-slate-600 sm:text-lg">
-              You need an account so your expenses remain private and separate
-              from every other user&apos;s records.
+              Create an account to keep your expenses private.
             </p>
           </div>
         </header>

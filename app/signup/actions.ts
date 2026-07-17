@@ -1,11 +1,7 @@
 "use server";
 
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import {
-  buildConfirmationRedirectUrl,
-  getCanonicalSiteOrigin,
-} from "@/lib/siteUrl";
 
 export type SignupFieldErrors = {
   email?: string;
@@ -14,30 +10,30 @@ export type SignupFieldErrors = {
 };
 
 export type SignupState = {
-  status: "idle" | "error" | "success";
+  status: "idle" | "error";
   message: string;
   fieldErrors?: SignupFieldErrors;
   email?: string;
 };
 
-const signupSuccessMessage =
-  "Account created. Check your email and confirm your account before logging in.";
-
 const genericSignupError =
   "Unable to create your account. Please try again.";
-
-const authEmailServiceError =
-  "Account creation failed because the authentication email service encountered a server problem. Check the Supabase Auth and SMTP logs.";
 
 const maybeExistingAccountMessage =
   "An account may already exist for this email. Try logging in or use another email.";
 
+const missingSessionMessage =
+  "Your account was created, but automatic sign-in is unavailable. Please check the authentication configuration and try again.";
+
 type SignupStage =
   | "create-supabase-client"
-  | "read-request-headers"
-  | "build-redirect-url"
   | "call-sign-up"
   | "validate-sign-up-result";
+
+type SignupData = {
+  user: { id?: string; identities?: unknown[] | null } | null;
+  session: { access_token?: string; refresh_token?: string } | null;
+};
 
 function getFormValue(formData: FormData, fieldName: string) {
   const value = formData.get(fieldName);
@@ -80,32 +76,11 @@ function validateSignupForm(formData: FormData) {
   };
 }
 
-function isAuthEmailServiceFailure(
-  code: string | undefined,
-  status: number | undefined,
-  message: string | undefined,
-) {
-  return (
-    code === "unexpected_failure" ||
-    status === 500 ||
-    /email delivery|smtp|send email|send mail|mail service/i.test(message ?? "")
-  );
-}
-
-function getSignupErrorMessage(
-  code: string | undefined,
-  status?: number,
-  message?: string,
-) {
-  if (isAuthEmailServiceFailure(code, status, message)) {
-    return authEmailServiceError;
-  }
-
+function getSignupErrorMessage(code: string | undefined) {
   switch (code) {
     case "signup_disabled":
     case "email_provider_disabled":
-      return "New account registration is currently unavailable. Check the Supabase email signup settings.";
-    case "over_email_send_rate_limit":
+      return "New account registration is currently unavailable.";
     case "over_request_rate_limit":
       return "Too many signup attempts. Wait a few minutes and try again.";
     case "weak_password":
@@ -113,8 +88,6 @@ function getSignupErrorMessage(
     case "email_address_invalid":
     case "validation_failed":
       return "Enter a valid email address.";
-    case "email_address_not_authorized":
-      return "The confirmation email could not be sent to this address. Check the SMTP configuration.";
     case "email_exists":
     case "user_already_exists":
       return maybeExistingAccountMessage;
@@ -123,21 +96,12 @@ function getSignupErrorMessage(
   }
 }
 
-function getShortMessage(message: string | undefined) {
-  if (!message) {
-    return undefined;
-  }
-
-  return message.length > 180 ? `${message.slice(0, 180)}...` : message;
-}
-
 function logSignUpError(
   stage: SignupStage,
   error: {
     name?: string;
     code?: string;
     status?: number;
-    message?: string;
   },
 ) {
   if (process.env.NODE_ENV !== "production") {
@@ -146,7 +110,6 @@ function logSignUpError(
       name: error.name,
       code: error.code,
       status: error.status,
-      message: getShortMessage(error.message),
     });
   }
 }
@@ -155,14 +118,12 @@ function logUnexpectedException(
   stage: SignupStage,
   error: {
     name?: string;
-    message?: string;
   },
 ) {
   if (process.env.NODE_ENV !== "production") {
     console.error("[signup] Unexpected exception", {
       stage,
       name: error.name,
-      message: getShortMessage(error.message),
     });
   }
 }
@@ -183,29 +144,40 @@ function logEmptyIdentitiesReturned() {
   }
 }
 
-function logConfirmationRedirectOrigin(stage: SignupStage, origin: string) {
+function logNoSessionReturned() {
   if (process.env.NODE_ENV !== "production") {
-    console.info("[signup] Confirmation redirect origin resolved", {
-      stage,
-      origin,
+    console.error("[signup] No session returned", {
+      stage: "validate-sign-up-result",
+      code: "missing_signup_session",
     });
   }
 }
 
 function getExceptionDetails(error: unknown): {
   name?: string;
-  message?: string;
 } {
   if (error instanceof Error) {
     return {
       name: error.name,
-      message: error.message,
     };
   }
 
-  return {
-    message: "Unknown signup error.",
-  };
+  return {};
+}
+
+function hasValidUserId(user: { id?: string } | null) {
+  return typeof user?.id === "string" && user.id.trim().length > 0;
+}
+
+function hasUsableSession(
+  session: { access_token?: string; refresh_token?: string } | null,
+) {
+  return (
+    typeof session?.access_token === "string" &&
+    session.access_token.trim().length > 0 &&
+    typeof session.refresh_token === "string" &&
+    session.refresh_token.trim().length > 0
+  );
 }
 
 export async function signup(
@@ -214,6 +186,7 @@ export async function signup(
 ): Promise<SignupState> {
   const { email, password, fieldErrors } = validateSignupForm(formData);
   let stage: SignupStage = "create-supabase-client";
+  let signupData: SignupData | null = null;
 
   if (Object.keys(fieldErrors).length > 0) {
     return {
@@ -226,66 +199,23 @@ export async function signup(
 
   try {
     const supabase = await createClient();
-    stage = "read-request-headers";
-    const requestHeaders = await headers();
-    stage = "build-redirect-url";
-    const currentOrigin = getCanonicalSiteOrigin(requestHeaders);
-    const emailRedirectTo = buildConfirmationRedirectUrl(currentOrigin);
-    logConfirmationRedirectOrigin(stage, currentOrigin);
 
     stage = "call-sign-up";
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo,
-      },
     });
+    signupData = data;
 
     if (error) {
       logSignUpError(stage, error);
 
       return {
         status: "error",
-        message: getSignupErrorMessage(
-          error.code,
-          error.status,
-          error.message,
-        ),
+        message: getSignupErrorMessage(error.code),
         email,
       };
     }
-
-    stage = "validate-sign-up-result";
-
-    if (!data.user) {
-      logNoUserReturned();
-
-      return {
-        status: "error",
-        message: genericSignupError,
-        email,
-      };
-    }
-
-    if (
-      Array.isArray(data.user.identities) &&
-      data.user.identities.length === 0
-    ) {
-      logEmptyIdentitiesReturned();
-
-      return {
-        status: "error",
-        message: maybeExistingAccountMessage,
-        email,
-      };
-    }
-
-    return {
-      status: "success",
-      message: signupSuccessMessage,
-      email,
-    };
   } catch (error) {
     logUnexpectedException(stage, getExceptionDetails(error));
 
@@ -295,4 +225,41 @@ export async function signup(
       email,
     };
   }
+
+  stage = "validate-sign-up-result";
+
+  if (!hasValidUserId(signupData?.user ?? null)) {
+    logNoUserReturned();
+
+    return {
+      status: "error",
+      message: genericSignupError,
+      email,
+    };
+  }
+
+  if (
+    Array.isArray(signupData?.user?.identities) &&
+    signupData.user.identities.length === 0
+  ) {
+    logEmptyIdentitiesReturned();
+
+    return {
+      status: "error",
+      message: maybeExistingAccountMessage,
+      email,
+    };
+  }
+
+  if (!hasUsableSession(signupData?.session ?? null)) {
+    logNoSessionReturned();
+
+    return {
+      status: "error",
+      message: missingSessionMessage,
+      email,
+    };
+  }
+
+  redirect("/dashboard");
 }

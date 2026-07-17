@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import AuthNotice from "@/components/AuthNotice";
 import LoginForm from "@/components/LoginForm";
-import ResendConfirmationForm from "@/components/ResendConfirmationForm";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -25,7 +24,6 @@ function getSingleParamValue(value: string | string[] | undefined) {
 
 function getLoginNotice(params: Awaited<SearchParams>): LoginNotice {
   const error = getSingleParamValue(params.error);
-  const message = getSingleParamValue(params.message);
 
   if (error === "session-required") {
     return {
@@ -41,17 +39,10 @@ function getLoginNotice(params: Awaited<SearchParams>): LoginNotice {
     };
   }
 
-  if (message === "signed-out") {
+  if (getSingleParamValue(params.message) === "signed-out") {
     return {
       variant: "success",
       message: "You have been logged out successfully.",
-    };
-  }
-
-  if (message === "email-confirmed") {
-    return {
-      variant: "success",
-      message: "Your email has been confirmed. You can now log in.",
     };
   }
 
@@ -111,13 +102,6 @@ export default async function LoginPage({
         <AuthNotice message={notice.message} variant={notice.variant} />
 
         <LoginForm />
-
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <p className="text-sm font-semibold leading-6 text-slate-700">
-            Created an account but did not receive the confirmation email?
-          </p>
-          <ResendConfirmationForm />
-        </section>
       </div>
     </main>
   );
