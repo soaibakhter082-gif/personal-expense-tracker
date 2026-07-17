@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import AuthNotice from "@/components/AuthNotice";
 import LoginForm from "@/components/LoginForm";
+import ResendConfirmationForm from "@/components/ResendConfirmationForm";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -110,6 +111,13 @@ export default async function LoginPage({
         <AuthNotice message={notice.message} variant={notice.variant} />
 
         <LoginForm />
+
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <p className="text-sm font-semibold leading-6 text-slate-700">
+            Created an account but did not receive the confirmation email?
+          </p>
+          <ResendConfirmationForm />
+        </section>
       </div>
     </main>
   );
