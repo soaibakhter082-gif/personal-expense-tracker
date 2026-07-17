@@ -38,9 +38,15 @@ test("signup creates an immediate session without confirmation redirects", () =>
 test("signup sends one welcome email after a usable session and still redirects", () => {
   const source = read("app/signup/actions.ts");
   const sessionCheckIndex = source.indexOf("if (!hasUsableSession");
-  const welcomeEmailIndex = source.indexOf("await sendWelcomeEmail(email);");
+  const welcomeEmailIndex = source.indexOf(
+    "const welcomeResult = await sendWelcomeEmail(email);",
+  );
+  const welcomeLogIndex = source.indexOf(
+    'console.info("[signup] welcome email result"',
+  );
   const redirectIndex = source.indexOf('redirect("/dashboard");');
   const errorReturnIndex = source.indexOf("if (error)");
+  const welcomeLogSnippet = source.slice(welcomeLogIndex, redirectIndex);
 
   assert.match(
     source,
@@ -50,8 +56,14 @@ test("signup sends one welcome email after a usable session and still redirects"
   assert.ok(sessionCheckIndex > -1);
   assert.ok(welcomeEmailIndex > sessionCheckIndex);
   assert.ok(welcomeEmailIndex > errorReturnIndex);
-  assert.ok(redirectIndex > welcomeEmailIndex);
-  assert.match(source, /await sendWelcomeEmail\(email\);\s*redirect\("\/dashboard"\);/);
+  assert.ok(welcomeLogIndex > welcomeEmailIndex);
+  assert.ok(redirectIndex > welcomeLogIndex);
+  assert.match(
+    source,
+    /sent:\s*welcomeResult\.sent[\s\S]*stage:\s*welcomeResult\.stage[\s\S]*status:\s*welcomeResult\.status[\s\S]*providerCode:\s*welcomeResult\.providerCode/,
+  );
+  assert.doesNotMatch(source, /if\s*\(\s*welcomeResult\.sent\s*\)/);
+  assert.doesNotMatch(welcomeLogSnippet, /email\s*:/);
 });
 
 test("login no longer exposes confirmation-email messaging", () => {

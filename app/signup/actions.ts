@@ -262,7 +262,13 @@ export async function signup(
     };
   }
 
-  await sendWelcomeEmail(email);
+  const welcomeResult = await sendWelcomeEmail(email);
+  console.info("[signup] welcome email result", {
+    sent: welcomeResult.sent,
+    stage: welcomeResult.stage,
+    status: welcomeResult.status,
+    providerCode: welcomeResult.providerCode,
+  });
 
   redirect("/dashboard");
 }
