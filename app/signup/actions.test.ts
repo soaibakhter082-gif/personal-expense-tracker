@@ -35,6 +35,25 @@ test("signup creates an immediate session without confirmation redirects", () =>
   assert.doesNotMatch(source, oldSignupSuccessText);
 });
 
+test("signup sends one welcome email after a usable session and still redirects", () => {
+  const source = read("app/signup/actions.ts");
+  const sessionCheckIndex = source.indexOf("if (!hasUsableSession");
+  const welcomeEmailIndex = source.indexOf("await sendWelcomeEmail(email);");
+  const redirectIndex = source.indexOf('redirect("/dashboard");');
+  const errorReturnIndex = source.indexOf("if (error)");
+
+  assert.match(
+    source,
+    /import\s+\{\s*sendWelcomeEmail\s*\}\s+from\s+"@\/lib\/email\/sendWelcomeEmail";/,
+  );
+  assert.equal(source.match(/sendWelcomeEmail\(email\)/g)?.length ?? 0, 1);
+  assert.ok(sessionCheckIndex > -1);
+  assert.ok(welcomeEmailIndex > sessionCheckIndex);
+  assert.ok(welcomeEmailIndex > errorReturnIndex);
+  assert.ok(redirectIndex > welcomeEmailIndex);
+  assert.match(source, /await sendWelcomeEmail\(email\);\s*redirect\("\/dashboard"\);/);
+});
+
 test("login no longer exposes confirmation-email messaging", () => {
   const loginAction = read("app/login/actions.ts");
   const loginPage = read("app/login/page.tsx");

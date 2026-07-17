@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { sendWelcomeEmail } from "@/lib/email/sendWelcomeEmail";
 import { createClient } from "@/lib/supabase/server";
 
 export type SignupFieldErrors = {
@@ -260,6 +261,8 @@ export async function signup(
       email,
     };
   }
+
+  await sendWelcomeEmail(email);
 
   redirect("/dashboard");
 }
